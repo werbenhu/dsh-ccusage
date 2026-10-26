@@ -28,6 +28,15 @@ cd C:\Users\werbe\.dsh\profiles\desktop
 pnpm add link:E:/github/ccusage
 ```
 
+也可以从 Release 直接装打包好的 tgz（不需要克隆仓库）：
+
+```powershell
+cd C:\Users\werbe\.dsh\profiles\desktop
+pnpm add https://github.com/werbenhu/dsh-ccusage/releases/download/v0.1.0/dsh-ccusage-0.1.0.tgz
+```
+
+同一 Release 里的 `SHA256SUMS.txt` 可用于校验下载内容。
+
 如果系统 pnpm 报 `ERR_PNPM_UNEXPECTED_STORE`（profile 的 `node_modules` 由更新的 store 版本创建），改用 DSH 自带的 pnpm：
 
 ```powershell
@@ -136,13 +145,15 @@ node --test test/*.test.mjs
 
 `.github/workflows/` 下按职责拆分：
 
-- `ci.yml`：`main` 推送和 PR 时在 Node 22 / 24 上跑静态检查与全部测试。
-- `release.yml`：推送 `v*` tag 时重跑测试，打包 `dsh-ccusage-<tag>.tgz` 并创建 GitHub Release。
+- `ci.yml`：`main` 推送和 PR 时跑静态检查与全部测试。矩阵覆盖 ubuntu 的 Node 22 / 24，以及 macOS、Windows 的 Node 22——路径分隔符、大小写、CRLF 这类平台差异只在 Linux 上测是漏的。
+- `release.yml`：推送 `v*` tag 时重跑测试，打包 `dsh-ccusage-<tag>.tgz`（附 `SHA256SUMS.txt`）并创建 GitHub Release。tag 必须与 `package.json` 的 `version` 一致，否则直接失败。
+
+失败时 `ci.yml` 会把 TAP 摘要输出成 check annotation：公开仓库的 job 日志要 admin 权限才能匿名取，annotations 可以。
 
 本地发版：
 
 ```powershell
-git tag v0.1.0
+git tag -a v0.1.0 -m "dsh-ccusage v0.1.0"
 git push origin v0.1.0
 ```
 
