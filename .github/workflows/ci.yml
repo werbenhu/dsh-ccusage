@@ -17,11 +17,21 @@ concurrency:
 jobs:
   test:
     name: Test (Node ${{ matrix.node }})
-    runs-on: ubuntu-latest
+    # macOS/Windows 上跑一遍：路径分隔符、大小写、CRLF 等平台差异
+    # 最容易在 Linux-only 的 CI 里漏测（0.1.0 首跑就因此挂过一次）。
     strategy:
       fail-fast: false
       matrix:
-        node: ['22', '24']
+        include:
+          - os: ubuntu-latest
+            node: '22'
+          - os: ubuntu-latest
+            node: '24'
+          - os: macos-latest
+            node: '22'
+          - os: windows-latest
+            node: '22'
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,6 +40,7 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Metadata consistency
+        shell: bash
         run: |
           node --input-type=module -e '
             import { readFileSync, readdirSync } from "node:fs";
@@ -46,6 +57,7 @@ jobs:
           '
 
       - name: Syntax check
+        shell: bash
         run: |
           set -eu
           node --check index.js
@@ -58,5 +70,6 @@ jobs:
         run: node --test test/*.test.mjs
 
       - name: Package dry-run
-        if: matrix.node == '22'
+        if: matrix.node == '22' && matrix.os == 'ubuntu-latest'
+        shell: bash
         run: npm pack --dry-run

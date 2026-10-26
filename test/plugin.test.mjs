@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { dirname, join } from 'node:path'
 
 import { apply, isTrustedRequest, normalizeConfig, name, version } from '../index.js'
 import { buildReport, normalizeSources, summarizeSessions } from '../src/report.js'
@@ -12,8 +12,13 @@ import { calculateCost, findRate } from '../src/pricing.js'
 import { dateKey, resolveRange, weekStartDay } from '../src/time.js'
 import { finalizeEntry } from '../src/sources/common.js'
 
-const here = dirname(fileURLToPath(import.meta.url))
-const FIXTURE_CLAUDE = join(here, 'fixtures', 'claude')
+/**
+ * 取 RUNTIME 侧的绝对路径。源码里用 join() 拼路径，join 按运行平台选分隔符，
+ * 所以 fixture 路径也必须同源，才能在任何平台上命中。
+ * （不能用 '/fixtures/...' 硬编码：Windows 下 join 得到反斜杠，路径对不上。）
+ */
+const here = fileURLToPath(new URL('.', import.meta.url)).replace(/[\\/]+$/, '')
+const FIXTURE_CLAUDE = [here, 'fixtures', 'claude'].join(sep)
 
 function fakeResponse() {
   return {
@@ -253,7 +258,7 @@ test('无效时间戳不进入报表', () => {
 })
 
 test('dsh source 解析会话事件并去重', async () => {
-  const root = join(here, 'fixtures', 'dsh')
+  const root = [here, 'fixtures', 'dsh'].join(sep)
   const roots = await resolveDshRoots([root])
   assert.deepEqual(roots, [root])
   const result = await scanDsh({ roots, costMode: 'auto', pricing: loadPricing() })
