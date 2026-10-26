@@ -61,6 +61,8 @@ jobs:
         id: pack
         run: |
           set -eu
+          # npm pack 不会自己创建 --pack-destination，缺目录会直接 ENOENT（exit 254）。
+          mkdir -p dist
           npm pack --pack-destination dist
           ASSET=$(ls dist/*.tgz | head -n 1)
           echo "asset=$ASSET" >> "$GITHUB_OUTPUT"

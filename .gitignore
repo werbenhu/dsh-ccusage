@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 *.log
 *.tgz
 .tmp/
@@ -8,3 +8,4 @@ Thumbs.db
 .vscode/
 .idea/
 coverage/
+dist/
