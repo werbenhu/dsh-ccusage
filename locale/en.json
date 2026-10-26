@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "CCUsage",
-    "description": "ccusage-style local usage and cost reports for Claude Code / Codex / OpenCode, with daily, weekly, monthly, session and 5-hour block views plus per-model cost breakdowns."
+    "description": "ccusage-style local AI token usage reports for Claude Code / Codex / OpenCode and more, with daily, weekly, monthly, session and 5-hour block views plus per-model breakdowns."
   }
 }

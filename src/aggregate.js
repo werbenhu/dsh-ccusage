@@ -5,16 +5,16 @@
 import { addUsage, emptyUsage, sumUsage } from './sources/common.js'
 import { dateKey, monthKey, weekStartDay } from './time.js'
 
-function round(value) {
-  return Math.round(value * 1e12) / 1e12
-}
-
 function iso(ms) {
   return new Date(ms).toISOString()
 }
 
 function modelNameOf(model) {
   return typeof model === 'string' && model !== '' ? model : 'unknown'
+}
+
+function tokensOfRow(row) {
+  return (row.inputTokens ?? 0) + (row.outputTokens ?? 0) + (row.cacheCreationTokens ?? 0) + (row.cacheReadTokens ?? 0)
 }
 
 function createBucket(period, agent) {
@@ -24,14 +24,12 @@ function createBucket(period, agent) {
     agent,
     usage,
     totalTokens: 0,
-    totalCost: 0,
     models: new Map(),
     agents: new Set(),
     byAgent: new Map(),
     entries: 0,
     firstActivity: undefined,
     lastActivity: undefined,
-    unpriced: new Set(),
   }
 }
 
@@ -39,24 +37,20 @@ function addToModel(bucket, entry) {
   const name = modelNameOf(entry.model)
   let model = bucket.models.get(name)
   if (model === undefined) {
-    model = { usage: emptyUsage(), cost: 0, missingPricing: false }
+    model = { usage: emptyUsage() }
     bucket.models.set(name, model)
   }
   addUsage(model.usage, entry.usage)
-  model.cost += entry.cost
-  if (entry.missingPricing === true) model.missingPricing = true
 }
 
 function accumulate(bucket, entry) {
   addUsage(bucket.usage, entry.usage)
   bucket.totalTokens += entry.totalTokens ?? sumUsage(entry.usage)
-  bucket.totalCost += entry.cost
   bucket.entries += 1
   bucket.agents.add(entry.agent)
   if (bucket.firstActivity === undefined || entry.timestamp < bucket.firstActivity) bucket.firstActivity = entry.timestamp
   if (bucket.lastActivity === undefined || entry.timestamp > bucket.lastActivity) bucket.lastActivity = entry.timestamp
   addToModel(bucket, entry)
-  if (entry.missingPricing === true) bucket.unpriced.add(modelNameOf(entry.model))
 }
 
 function addEntry(bucket, entry) {
@@ -78,13 +72,11 @@ function modelBreakdown(bucket) {
         outputTokens: model.usage.outputTokens,
         cacheCreationTokens: model.usage.cacheCreationTokens,
         cacheReadTokens: model.usage.cacheReadTokens,
-        cost: round(model.cost),
       }
       if (model.usage.extraTokens > 0) row.reasoningOutputTokens = model.usage.extraTokens
-      if (model.missingPricing) row.missingPricing = true
       return row
     })
-    .sort((a, b) => b.cost - a.cost || a.modelName.localeCompare(b.modelName))
+    .sort((a, b) => tokensOfRow(b) - tokensOfRow(a) || a.modelName.localeCompare(b.modelName))
 }
 
 function rowFromBucket(bucket, extra = {}) {
@@ -96,7 +88,6 @@ function rowFromBucket(bucket, extra = {}) {
     cacheCreationTokens: bucket.usage.cacheCreationTokens,
     cacheReadTokens: bucket.usage.cacheReadTokens,
     totalTokens: bucket.totalTokens,
-    totalCost: round(bucket.totalCost),
     modelsUsed: [...bucket.models.keys()].sort(),
     modelBreakdowns: modelBreakdown(bucket),
   }
@@ -113,7 +104,6 @@ function rowFromBucket(bucket, extra = {}) {
           cacheCreationTokens: sub.usage.cacheCreationTokens,
           cacheReadTokens: sub.usage.cacheReadTokens,
           totalTokens: sub.totalTokens,
-          totalCost: round(sub.totalCost),
           entries: sub.entries,
           modelsUsed: [...sub.models.keys()].sort(),
           modelBreakdowns: modelBreakdown(sub),
@@ -121,7 +111,7 @@ function rowFromBucket(bucket, extra = {}) {
         if (sub.usage.extraTokens > 0) item.reasoningOutputTokens = sub.usage.extraTokens
         return item
       })
-      .sort((a, b) => b.totalCost - a.totalCost || b.totalTokens - a.totalTokens || a.agent.localeCompare(b.agent))
+      .sort((a, b) => b.totalTokens - a.totalTokens || a.agent.localeCompare(b.agent))
   }
   return { ...row, ...extra.top }
 }
@@ -143,21 +133,17 @@ export function summarize(entries, keyFn, { order = 'asc', agent = 'all' } = {})
   }
   const rows = [...buckets.values()].map((bucket) => rowFromBucket(bucket))
   if (order === 'asc') rows.sort((a, b) => (a.period < b.period ? -1 : a.period > b.period ? 1 : 0))
-  else rows.sort((a, b) => b.totalCost - a.totalCost || (a.period < b.period ? 1 : -1))
+  else rows.sort((a, b) => b.totalTokens - a.totalTokens || (a.period < b.period ? 1 : -1))
   return rows
 }
 
 /** 汇总所有 entry 的 totals。 */
 export function totalize(entries) {
   const usage = emptyUsage()
-  let cost = 0
   let tokens = 0
-  const unpriced = new Set()
   for (const entry of entries) {
     addUsage(usage, entry.usage)
-    cost += entry.cost
     tokens += entry.totalTokens ?? sumUsage(entry.usage)
-    if (entry.missingPricing === true) unpriced.add(modelNameOf(entry.model))
   }
   const totals = {
     inputTokens: usage.inputTokens,
@@ -165,14 +151,12 @@ export function totalize(entries) {
     cacheCreationTokens: usage.cacheCreationTokens,
     cacheReadTokens: usage.cacheReadTokens,
     totalTokens: tokens,
-    totalCost: round(cost),
   }
   if (usage.extraTokens > 0) totals.reasoningOutputTokens = usage.extraTokens
-  if (unpriced.size > 0) totals.unpricedModels = [...unpriced].sort()
   return totals
 }
 
-/** 会话报表：period 用会话 id（Codex 用相对文件路径），按费用降序。 */
+/** 会话报表：period 用会话 id（Codex 用相对文件路径），按 token 降序。 */
 export function summarizeSessions(entries) {
   const buckets = new Map()
   for (const entry of entries) {
@@ -199,7 +183,7 @@ export function summarizeSessions(entries) {
       })
       return row
     })
-    .sort((a, b) => b.totalCost - a.totalCost || b.totalTokens - a.totalTokens)
+    .sort((a, b) => b.totalTokens - a.totalTokens)
 }
 
 export function entryDate(entry, timeZone) {

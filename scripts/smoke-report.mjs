@@ -1,7 +1,7 @@
 ﻿import { runReport } from '../src/report.js'
 
 const started = Date.now()
-const report = await runReport({ timezone: 'Asia/Shanghai', sources: ['claude', 'codex', 'opencode'], costMode: 'auto' })
+const report = await runReport({ timezone: 'Asia/Shanghai', sources: ['claude', 'codex', 'opencode'] })
 console.log(JSON.stringify({
   ms: Date.now() - started,
   entries: report.metadata.entries,

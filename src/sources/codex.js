@@ -231,7 +231,7 @@ function eventKey(event, sessionId) {  if (event.responseId !== undefined) retur
   return `t:${sessionId}:${event.timestamp}:${event.model}:${r.input}:${r.cached}:${r.cacheCreation}:${r.output}:${r.reasoning}:${r.total}`
 }
 
-export async function scanCodex({ roots, costMode, pricing }) {
+export async function scanCodex({ roots }) {
   const files = []
   for (const root of roots) files.push(...(await collectRollouts(root)))
   files.sort()
@@ -270,10 +270,9 @@ export async function scanCodex({ roots, costMode, pricing }) {
         messageId: event.responseId,
         requestId: event.responseId,
         usage,
-        storedCost: undefined,
         filePath: file,
       }
-      finalizeEntry(entry, costMode, pricing)
+      finalizeEntry(entry)
       entries.push(entry)
     }
   }

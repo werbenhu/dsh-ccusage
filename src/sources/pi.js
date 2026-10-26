@@ -162,9 +162,6 @@ async function readSessionFile(file) {
       usage.outputTokens += total - parts
     }
 
-    const displayCost = typeof usageRaw.cost?.total === 'number' && Number.isFinite(usageRaw.cost.total) && usageRaw.cost.total >= 0
-      ? usageRaw.cost.total
-      : undefined
     const key = `${timestamp}\u0000${model}\u0000${usage.inputTokens}\u0000${usage.outputTokens}\u0000${usage.cacheReadTokens}\u0000${usage.cacheCreationTokens}`
     if (seen.has(key)) continue
     seen.add(key)
@@ -176,13 +173,10 @@ async function readSessionFile(file) {
       sessionId,
       project,
       projectPath: project,
-      // ccusage 在报表里用 `[pi] ` 前缀区分 pi 与其它 source 的同名模型；
-      // 计价仍用原始模型名。
+      // ccusage 在报表里用 `[pi] ` 前缀区分 pi 与其它 source 的同名模型。
       model: `[pi] ${model}`,
-      pricingModel: model,
       provider: message.provider,
       usage,
-      storedCost: displayCost,
       messageId: record.id,
       filePath: file,
     })
@@ -190,7 +184,7 @@ async function readSessionFile(file) {
   return entries
 }
 
-export async function scanPi({ roots, costMode, pricing }) {
+export async function scanPi({ roots }) {
   const entries = []
   // 同一个会话可能同时出现在 sessions/<project>/<file>.jsonl 与
   // sessions/<project>/<file>/run-0/session.jsonl、subagent-artifacts/ 下；
@@ -206,7 +200,7 @@ export async function scanPi({ roots, costMode, pricing }) {
         // 的转写里，时间戳可能被重放改写；仅在同一顶层会话的跨文件副本间去重。
         const key = [
           transcriptionGroupFromFile(file),
-          entry.pricingModel ?? entry.model,
+          entry.model,
           entry.usage.inputTokens,
           entry.usage.outputTokens,
           entry.usage.cacheReadTokens,
@@ -215,7 +209,7 @@ export async function scanPi({ roots, costMode, pricing }) {
         const owner = seen.get(key)
         if (owner !== undefined && owner !== file) continue
         if (owner === undefined) seen.set(key, file)
-        finalizeEntry(entry, costMode, pricing)
+        finalizeEntry(entry)
         entries.push(entry)
       }
       files += 1

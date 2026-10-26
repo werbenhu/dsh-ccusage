@@ -21,13 +21,6 @@ import { cachedByFile } from '../cache.js'
 import { emptyUsage, finalizeEntry } from './common.js'
 
 const DEFAULT_MODEL = 'kimi-for-coding'
-// Kimi for Coding 的计价模型在 2026-04 切换到 k2.6；之前按 k2.5 计价。
-const KIMI_FOR_CODING_K2_6_CUTOFF_MS = 1_776_698_890_072
-// 日志里显示的模型名与 models.dev 的 key 不完全一致，这里做计价别名。
-const PRICING_ALIASES = {
-  k3: 'kimi-k3-fast',
-  'k3.1-pro': 'kimi-k3.1-pro',
-}
 
 function expandHome(value) {
   if (typeof value !== 'string') return value
@@ -123,13 +116,6 @@ async function readRootModel(root) {
   return DEFAULT_MODEL
 }
 
-function pricingModel(model, timestamp) {
-  if (model === DEFAULT_MODEL) {
-    return timestamp < KIMI_FOR_CODING_K2_6_CUTOFF_MS ? 'moonshot/kimi-k2.5' : 'moonshot/kimi-k2.6'
-  }
-  return PRICING_ALIASES[model] ?? model
-}
-
 function sessionIdFromPath(file) {
   const parent = dirname(file)
   // 新版路径的上一级是 agents 下的 agent 目录，再上两级才是 session。
@@ -207,7 +193,6 @@ async function readWireFile(file, configuredModel) {
       project: 'kimi',
       projectPath: 'Kimi',
       model,
-      pricingModel: pricingModel(model, timestamp),
       messageId,
       usage,
       filePath: file,
@@ -216,7 +201,7 @@ async function readWireFile(file, configuredModel) {
   return entries
 }
 
-export async function scanKimi({ roots, costMode, pricing }) {
+export async function scanKimi({ roots }) {
   const entries = []
   // 新版 wire 里同一条 usage.record 会同时出现在 agents/<agent>/wire.jsonl，
   // 也可能被多个 root 覆盖；按 ccusage 的 kimi_entry_key 做扫描级去重。
@@ -242,7 +227,7 @@ export async function scanKimi({ roots, costMode, pricing }) {
         ].join('\u0000')
         if (seen.has(key)) continue
         seen.add(key)
-        finalizeEntry(entry, costMode, pricing)
+        finalizeEntry(entry)
         entries.push(entry)
       }
       files += 1

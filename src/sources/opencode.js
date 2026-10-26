@@ -143,14 +143,12 @@ function entryFromMessage(value, { sessionId, filePath, directory, messageId, ti
     provider: value.providerID,
     messageId: messageId ?? value.id,
     usage,
-    // OpenCode 自己算过价：>0 时视为可信的存储价。
-    storedCost: num(value.cost) > 0 ? num(value.cost) : undefined,
     filePath,
   }
   return entry
 }
 
-async function scanDatabase(root, costMode, pricing) {
+async function scanDatabase(root) {
   const dbPath = join(root, 'opencode.db')
   if (!(await isFile(dbPath))) return undefined
   const rows = await readOpenCodeDatabase(dbPath)
@@ -170,14 +168,14 @@ async function scanDatabase(root, costMode, pricing) {
       timestamp: typeof row.timeCreated === 'number' ? row.timeCreated : undefined,
     })
     if (entry !== undefined) {
-      finalizeEntry(entry, costMode, pricing)
+      finalizeEntry(entry)
       entries.push(entry)
     }
   }
   return entries
 }
 
-async function scanJsonStorage(root, costMode, pricing) {
+async function scanJsonStorage(root) {
   const dir = (await isDirectory(join(root, 'storage', 'message')))
     ? join(root, 'storage', 'message')
     : join(root, 'message')
@@ -197,7 +195,7 @@ async function scanJsonStorage(root, costMode, pricing) {
       messageId: value?.id ?? basename(file, '.json'),
     })
     if (entry !== undefined) {
-      finalizeEntry(entry, costMode, pricing)
+      finalizeEntry(entry)
       entries.push(entry)
     }
   }
@@ -208,14 +206,14 @@ async function scanJsonStorage(root, costMode, pricing) {
  * ccusage 的 OpenCode 数据 = SQLite 里的新消息 + storage/message 里的旧消息。
  * 两路可能包含同一条消息（迁移后旧 JSON 还在），按 messageId 去重并以 DB 为准。
  */
-export async function scanOpenCode({ roots, costMode, pricing }) {
+export async function scanOpenCode({ roots }) {
   const entries = []
   let files = 0
   for (const root of roots) {
     const seen = new Set()
     const merged = []
     // 数据库存在但读取失败时必须显式失败，不能把不完整的 legacy 结果伪装成完整扫描。
-    const database = await scanDatabase(root, costMode, pricing)
+    const database = await scanDatabase(root)
     if (database !== undefined) {
       for (const entry of database) {
         merged.push(entry)
@@ -223,7 +221,7 @@ export async function scanOpenCode({ roots, costMode, pricing }) {
       }
       files += 1
     }
-    const storage = await scanJsonStorage(root, costMode, pricing)
+    const storage = await scanJsonStorage(root)
     files += storage.files
     for (const entry of storage.entries) {
       if (entry.messageId && seen.has(entry.messageId)) continue

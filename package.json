@@ -1,6 +1,6 @@
 {
   "name": "dsh-ccusage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "DSH 插件：ccusage 风格的 AI 编程用量分析，支持 Claude Code / Codex / OpenCode / Kimi / Grok / pi 和 DSH 自身会话，日/周/月/会话/5 小时块报表。",
@@ -22,7 +22,6 @@
     "index.js",
     "client.js",
     "src",
-    "data",
     "vendor",
     "cordis.patch.yml",
     "locale/*.json",
@@ -56,7 +55,6 @@
     "deepseek-harness",
     "ccusage",
     "usage",
-    "cost",
     "tokens"
   ],
   "license": "MIT"

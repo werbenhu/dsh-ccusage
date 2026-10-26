@@ -1,17 +1,16 @@
 # dsh-ccusage
 
-在 DeepSeek Harness 侧边栏看本机的 AI 用量：日、周、月、会话和 5 小时计费块。
+在 DeepSeek Harness 侧边栏看本机的 AI 用量：日、周、月、会话和 5 小时块。
 
 数据来自本机的 Claude Code、Codex、OpenCode、Kimi、Grok、pi 会话记录，外加 DSH 自己的会话。全部本地读取，不联网。
 
 ## 功能
 
 - 日 / 周 / 月 / 会话四个视图，按本地时区统计，可以按来源和项目过滤。
-- 5 小时计费块：对齐 Claude 订阅窗口，标出空档，正在进行的块显示消耗速度和预计用量。只统计 Claude Code。
+- 5 小时块：对齐 Claude 订阅的 5 小时计费窗口，标出空档，正在进行的块显示消耗速度和预计用量。只统计 Claude Code。
 - 顶部四张卡：总 token、输入、输出、缓存读（带命中率），下面是 token 趋势图和来源占比。
 - 表格默认收起，点一行展开当天的模型明细，模型旁边标出它来自哪个来源。
-- 面板只看 token，不算钱。费用字段在 JSON 接口里。
-- 价格表用 models.dev 快照，缺价格的模型会标成「未定价」，也可以自己补。
+- 面板和 JSON 都只看 token，不估算费用。
 
 ## 安装
 
@@ -52,11 +51,6 @@ pnpm add https://github.com/werbenhu/dsh-ccusage/releases/download/v0.1.0/dsh-cc
     timezone: Asia/Shanghai     # 留空用系统时区
     weekStart: monday           # 周视图从周一还是周日开始
     sources: [claude, codex, opencode, kimi, grok, pi, dsh]
-    pricing:
-      overrides:                # 自定义价格，单位是美元 / 百万 token
-        my-model:
-          input: 1.0
-          output: 3.0
 ```
 
 各来源也支持追加目录（`claudeDirs`、`codexDirs`、`dshDirs` 等），默认位置：
@@ -71,11 +65,11 @@ pnpm add https://github.com/werbenhu/dsh-ccusage/releases/download/v0.1.0/dsh-cc
 | pi | `~/.pi/agent/sessions/**/*.jsonl` |
 | DSH | `~/.dsh/sessions/**/session*.jsonl.zstd` |
 
-DSH 的费用是 API 等价价，订阅额度不按它扣费。不想看就在来源里关掉。
+DSH 记录的是 API 等价的用量；订阅额度本身不按 token 计费。不想看就在来源里关掉。
 
 ## JSON 接口
 
-报表也能从 HTTP 拿，路径 `/api/dsh-ccusage/report`，字段和 ccusage 的 JSON 输出一致。`POST /refresh` 清缓存后重新扫描。
+报表也能从 HTTP 拿，路径 `/api/dsh-ccusage/report`，字段对齐 ccusage 的 JSON 输出（不含费用）。`POST /refresh` 清缓存后重新扫描。
 
 ## 开发
 
@@ -83,7 +77,7 @@ DSH 的费用是 API 等价价，订阅额度不按它扣费。不想看就在�
 npm test
 ```
 
-测试全离线，用各个来源的 fixture 跑解析、聚合、时区和计价。
+测试全离线，用各个来源的 fixture 跑解析、聚合和时区。
 
 发版：改 `package.json` 的版本号，打同名 tag 推上去，CI 会跑测试并生成 Release 里的 tgz。
 
@@ -94,4 +88,4 @@ git push origin v0.1.1
 
 ## License
 
-MIT。价格快照来自 models.dev，fzstd 以 MIT 许可放在 `vendor/`。
+MIT。JSON 里用到的 fzstd 以 MIT 许可放在 `vendor/`。

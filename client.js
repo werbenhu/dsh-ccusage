@@ -32,7 +32,6 @@ window.__ModuleLoader__.load({
         subtitle: '跨工具追踪 Token 与缓存效率',
         refresh: '刷新',
         refreshing: '刷新中…',
-        cost: '费用',
         tokens: 'Token',
         totalTokens: '总 Token',
         input: '输入',
@@ -53,9 +52,6 @@ window.__ModuleLoader__.load({
         days30: '近 30 天',
         thisMonth: '本月',
         allTime: '全部',
-        auto: '自动',
-        calculate: '按 Token',
-        display: '日志价',
         date: '日期',
         week: '周起始',
         month: '月份',
@@ -69,13 +65,11 @@ window.__ModuleLoader__.load({
         burnRate: '燃尽速率',
         projection: '预计',
         tokensPerMin: 'token/分',
-        costPerHour: '$/小时',
         remaining: '剩余',
         minutes: '分钟',
         noData: '这段范围内没有用量记录。',
         loadFailed: '加载失败',
         retry: '重试',
-        unpriced: '未定价模型',
         project: '项目',
         projectPlaceholder: '按项目路径过滤…',
         entries: '条记录',
@@ -89,7 +83,7 @@ window.__ModuleLoader__.load({
         generated: '生成于',
         timezone: '时区',
         sourceAll: '全部来源',
-        costNote: '只统计本地日志里的 Token，不估算费用。',
+        note: '只统计本地日志里的 Token，不估算费用。',
         loading: '正在扫描本地日志…',
         blockWindow: '{0} → {1}',
         blockTokens: '{0} tokens',
@@ -100,8 +94,7 @@ window.__ModuleLoader__.load({
         clearFilter: '清除',
         overview: 'USAGE ANALYTICS',
         localOnly: '仅本地分析',
-        costMode: '计价方式',
-        costTrend: 'Token 趋势',
+        trend: 'Token 趋势',
         sourceDistribution: '来源 Token 占比',
         dailyAverage: '活跃日均',
         activeDays: '活跃天数',
@@ -109,12 +102,10 @@ window.__ModuleLoader__.load({
         sourceCount: '个来源',
         blocksCount: '个计费块',
         currentRange: '当前范围',
-        noCostData: '当前范围还没有 Token 记录。',
         expand: '展开模型明细',
         collapse: '收起模型明细',
         tableHint: '点击行查看模型明细',
         allTimeShort: '全部时间',
-        noCost: '$0.00',
         localData: '数据不会离开本机',
 
       },
@@ -124,7 +115,6 @@ window.__ModuleLoader__.load({
         subtitle: 'Track tokens and cache efficiency across your AI tools',
         refresh: 'Refresh',
         refreshing: 'Refreshing…',
-        cost: 'Cost',
         tokens: 'Tokens',
         totalTokens: 'Total Tokens',
         input: 'Input',
@@ -161,13 +151,11 @@ window.__ModuleLoader__.load({
         burnRate: 'Burn rate',
         projection: 'Projection',
         tokensPerMin: 'tok/min',
-        costPerHour: '$/hour',
         remaining: 'remaining',
         minutes: 'min',
         noData: 'No usage in this range.',
         loadFailed: 'Failed to load',
         retry: 'Retry',
-        unpriced: 'Unpriced models',
         project: 'Project',
         projectPlaceholder: 'Filter by project path…',
         entries: 'entries',
@@ -181,7 +169,7 @@ window.__ModuleLoader__.load({
         generated: 'Generated',
         timezone: 'Timezone',
         sourceAll: 'All sources',
-        costNote: 'Counts tokens from local logs only; cost is not estimated.',
+        note: 'Counts tokens from local logs only; cost is not estimated.',
         loading: 'Scanning local logs…',
         blockWindow: '{0} → {1}',
         blockTokens: '{0} tokens',
@@ -192,8 +180,7 @@ window.__ModuleLoader__.load({
         clearFilter: 'Clear',
         overview: 'USAGE ANALYTICS',
         localOnly: 'Local analysis',
-        costMode: 'Cost mode',
-        costTrend: 'Token trend',
+        trend: 'Token trend',
         sourceDistribution: 'Tokens by source',
         dailyAverage: 'Avg. active day',
         activeDays: 'Active days',
@@ -201,12 +188,10 @@ window.__ModuleLoader__.load({
         sourceCount: 'sources',
         blocksCount: 'billing blocks',
         currentRange: 'Current range',
-        noCostData: 'No token usage in this range yet.',
         expand: 'Expand model breakdown',
         collapse: 'Collapse model breakdown',
         tableHint: 'Select a row for model details',
         allTimeShort: 'All time',
-        noCost: '$0.00',
         localData: 'Your data never leaves this device',
 
       },
@@ -289,7 +274,7 @@ window.__ModuleLoader__.load({
 .ccu-source-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;font-size:11px}
 .ccu-source-row .ccu-source{min-width:0;overflow:hidden;text-overflow:ellipsis}
 .ccu-source-share{color:var(--ccu-faint);font-variant-numeric:tabular-nums}
-.ccu-source-cost{min-width:52px;color:var(--ccu-muted);font-weight:550;text-align:right;font-variant-numeric:tabular-nums}
+.ccu-source-tokens{min-width:52px;color:var(--ccu-muted);font-weight:550;text-align:right;font-variant-numeric:tabular-nums}
 .ccu-dot{display:inline-block;flex:0 0 6px;width:6px;height:6px;border-radius:50%}
 .ccu-source{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .ccu-data-panel{overflow:visible}
@@ -333,7 +318,6 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
 .ccu-table tfoot td{border-top:1px solid var(--ccu-border);border-bottom:0;color:var(--ccu-text);background:color-mix(in srgb,var(--ccu-raised) 65%,transparent);font-weight:620}
 .ccu-table .muted,.muted{color:var(--ccu-faint)}
 .ccu-table .mono,.mono{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10.5px}
-.ccu-table .cost-cell{color:var(--ccu-text);font-weight:620}
 .ccu-period-cell{display:flex;align-items:center;gap:7px}
 .ccu-period-text{display:flex;flex-direction:column;gap:1px}
 .ccu-date-year{color:var(--ccu-faint);font-size:9px;font-weight:400}
@@ -663,7 +647,7 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
       if (data.length === 0) {
         return h('section', { className: 'ccu-panel ccu-chart' },
           h('div', { className: 'ccu-panel-head' },
-            h('div', null, h('div', { className: 'ccu-panel-title' }, t('costTrend')), h('div', { className: 'ccu-panel-kicker' }, rangeLabel)),
+            h('div', null, h('div', { className: 'ccu-panel-title' }, t('trend')), h('div', { className: 'ccu-panel-kicker' }, rangeLabel)),
             h('span', { className: 'ccu-range-pill' }, t('daily'))),
           h('div', { className: 'ccu-chart-empty' }, t('noData')))
       }
@@ -687,7 +671,7 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
       return h('section', { className: 'ccu-panel ccu-chart' },
         h('div', { className: 'ccu-chart-head' },
           h('div', null,
-            h('div', { className: 'ccu-panel-title' }, t('costTrend')),
+            h('div', { className: 'ccu-panel-title' }, t('trend')),
             h('div', { className: 'ccu-panel-kicker' }, `${rangeLabel} · ${t('daily')}`)),
           h('div', { className: 'ccu-chart-value' },
             h('b', null, compact(selected.totalTokens)),
@@ -697,7 +681,7 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
           className: 'ccu-chart-svg',
           viewBox: `0 0 ${width} ${height}`,
           role: 'img',
-          'aria-label': `${t('costTrend')}: ${rangeLabel}`,
+          'aria-label': `${t('trend')}: ${rangeLabel}`,
           onMouseLeave: () => setHovered(undefined),
         },
           h('defs', null,
@@ -788,8 +772,8 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
               stats.map((item) => h('div', { className: 'ccu-source-row', key: item.agent },
                 h(SourceChip, { agent: item.agent }),
                 h('span', { className: 'ccu-source-share' }, percent(item.totalTokens, total)),
-                h('span', { className: 'ccu-source-cost' }, compact(item.totalTokens))))))
-          : h('div', { className: 'ccu-chart-empty' }, t('noCostData')))
+                h('span', { className: 'ccu-source-tokens' }, compact(item.totalTokens))))))
+          : h('div', { className: 'ccu-chart-empty' }, t('noData')))
     }
 
     function modelRowsWithSource(row) {
@@ -1238,7 +1222,7 @@ table.ccu-table{width:100%;min-width:850px;border-collapse:collapse;font-size:11
           h(SourceDistribution, { stats: sourceStats, t })),
 
         h('footer', { className: 'ccu-foot' },
-          h('span', { className: 'ccu-foot-status', title: t('costNote') },
+          h('span', { className: 'ccu-foot-status', title: t('note') },
             h('span', { className: 'ccu-live-dot' }), t('localData')),
           h('span', null,
             meta !== undefined ? `${meta.timezone} · ` : '',

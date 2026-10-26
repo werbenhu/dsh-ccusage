@@ -7,8 +7,7 @@
  *
  * 只有 `params.update.sessionUpdate === "turn_completed"` 的事件带用量：
  *   usage.inputTokens 是含缓存的总输入，要减去 cachedReadTokens / cacheCreationTokens；
- *   usage.outputTokens 已含 reasoningTokens，不再单列；
- *   usage.costUsdTicks / 1e10 是 Grok 自己记录的美元费用（1 tick = $1e-10）。
+ *   usage.outputTokens 已含 reasoningTokens，不再单列。
  * 一行可能同时包含多个模型（modelUsage），每个模型各出一条 entry。
  */
 
@@ -112,11 +111,6 @@ async function readSummary(file) {
   }
 }
 
-function costFromTicks(value) {
-  const ticks = num(value)
-  return ticks > 0 ? ticks / 1e10 : undefined
-}
-
 function entryFromTurn(record, file, summary, model, usageRaw) {
   const params = record.params ?? {}
   const update = params.update ?? {}
@@ -151,9 +145,7 @@ function entryFromTurn(record, file, summary, model, usageRaw) {
     project: lastPathSegment(cwd) || 'grok',
     projectPath: cwd,
     model: displayModel,
-    pricingModel: displayModel.replace(/-build(-fast)?$/, '') || displayModel,
     usage,
-    storedCost: costFromTicks(usageRaw.costUsdTicks),
     filePath: file,
   }
 }
@@ -199,7 +191,7 @@ async function readUpdatesFile(file, summary) {
     for (const entry of produced) {
       const key = typeof eventId === 'string' && eventId !== ''
         ? `e\u0000${eventId}\u0000${entry.model}`
-        : `c\u0000${entry.timestamp}\u0000${entry.model}\u0000${entry.usage.inputTokens}\u0000${entry.usage.outputTokens}\u0000${entry.usage.cacheReadTokens}\u0000${entry.usage.cacheCreationTokens}\u0000${entry.storedCost ?? ''}`
+        : `c\u0000${entry.timestamp}\u0000${entry.model}\u0000${entry.usage.inputTokens}\u0000${entry.usage.outputTokens}\u0000${entry.usage.cacheReadTokens}\u0000${entry.usage.cacheCreationTokens}`
       if (seen.has(key)) continue
       seen.add(key)
       entries.push(entry)
@@ -208,7 +200,7 @@ async function readUpdatesFile(file, summary) {
   return entries
 }
 
-export async function scanGrok({ roots, costMode, pricing }) {
+export async function scanGrok({ roots }) {
   const entries = []
   let files = 0
   for (const root of roots) {
@@ -223,7 +215,7 @@ export async function scanGrok({ roots, costMode, pricing }) {
       ])}`
       const list = await cachedByFile(file, () => readUpdatesFile(file, summary), cacheVariant)
       for (const entry of list) {
-        finalizeEntry(entry, costMode, pricing)
+        finalizeEntry(entry)
         entries.push(entry)
       }
       files += 1

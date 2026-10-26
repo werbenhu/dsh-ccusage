@@ -110,11 +110,6 @@ function projectFromCwd(cwd) {
   return lastPathSegment(cwd) || cwd
 }
 
-/** 去掉 DSH 的 Ollama 云后缀，让价格表能命中 deepseek-v4.1-flash。 */
-function pricingModelName(model) {
-  return model.replace(/:\d+-cloud$/, '')
-}
-
 async function readSessionFile(file) {
   let buffer
   let mtime
@@ -186,7 +181,6 @@ async function readSessionFile(file) {
       projectPath,
       project,
       model,
-      pricingModel: pricingModelName(model),
       provider: message?.source?.provider,
       messageId: typeof message?.id === 'string' ? message.id : undefined,
       usage,
@@ -196,7 +190,7 @@ async function readSessionFile(file) {
   return entries
 }
 
-export async function scanDsh({ roots, costMode, pricing }) {
+export async function scanDsh({ roots }) {
   const entries = []
   const seen = new Set()
   let files = 0
@@ -210,7 +204,7 @@ export async function scanDsh({ roots, costMode, pricing }) {
           : `${entry.sessionId}\u0000${entry.timestamp}\u0000${entry.model}\u0000${entry.usage.inputTokens}\u0000${entry.usage.outputTokens}\u0000${entry.usage.cacheReadTokens}\u0000${entry.usage.cacheCreationTokens}`
         if (seen.has(key)) continue
         seen.add(key)
-        finalizeEntry(entry, costMode, pricing)
+        finalizeEntry(entry)
         entries.push(entry)
       }
       files += 1

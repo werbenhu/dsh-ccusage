@@ -2,7 +2,7 @@
 #
 # Host 侧读取 Claude Code（~/.claude/projects）、Codex（~/.codex/sessions）和
 # OpenCode（~/.local/share/opencode/storage/message）的本地会话记录，按
-# ccusage 的算法聚合 token 与成本，通过同源路由
+# ccusage 的算法聚合 token 用量，通过同源路由
 # /api/dsh-ccusage/* 提供给前端。
 #
 # 所有配置项都有内置默认值。要调整时，在 profile 的 cordis.patch.yml 里加：
@@ -11,7 +11,6 @@
 #     config:
 #       timezone: Asia/Shanghai   # 默认跟随系统
 #       sources: [claude, codex, opencode]
-#       costMode: auto            # auto | calculate | display
 #       cacheMs: 20000            # 扫描结果缓存，毫秒
 #       weekStart: monday         # monday | sunday
 #       claudeDirs: []            # 覆盖默认的 ~/.claude

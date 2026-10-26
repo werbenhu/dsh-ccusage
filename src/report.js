@@ -2,7 +2,6 @@
  * 报表编排：扫描 sources → 过滤 → daily/weekly/monthly/session/blocks 五张表。
  */
 
-import { loadPricing } from './pricing.js'
 import { resolveClaudeRoots, scanClaude } from './sources/claude.js'
 import { resolveCodexRoots, scanCodex } from './sources/codex.js'
 import { resolveOpenCodeRoots, scanOpenCode } from './sources/opencode.js'
@@ -46,7 +45,7 @@ export function normalizeSources(value) {
  * 扫描所有选中的 source。
  * @returns {Promise<{entries:Array, sources:Record<string,{entries:number,roots:string[]}>, warnings:string[]}>}
  */
-export async function collectEntries(config = {}, pricing = loadPricing()) {
+export async function collectEntries(config = {}) {
   const sources = normalizeSources(config.sources)
   const entries = []
   const scanned = {}
@@ -56,7 +55,7 @@ export async function collectEntries(config = {}, pricing = loadPricing()) {
     let roots = []
     try {
       roots = await scanner.resolve(config[scanner.key])
-      const result = await scanner.scan({ roots, costMode: config.costMode ?? 'auto', pricing })
+      const result = await scanner.scan({ roots })
       const list = Array.isArray(result) ? result : (result.entries ?? [])
       entries.push(...list)
       scanned[name] = { entries: list.length, files: result.files, roots }
@@ -164,11 +163,7 @@ export function buildReport(entries, options = {}) {
 export async function runReport(config = {}) {
   const timeZone = normalizeTimeZone(config.timezone)
   const range = resolveRange(config, timeZone, config.now ?? Date.now())
-  const basePricing = loadPricing()
-  const pricing = config.pricing !== null && typeof config.pricing === 'object'
-    ? { ...basePricing, ...config.pricing }
-    : basePricing
-  const collected = await collectEntries(config, pricing)
+  const collected = await collectEntries(config)
   const report = buildReport(collected.entries, {
     timeZone,
     weekStart: config.weekStart,

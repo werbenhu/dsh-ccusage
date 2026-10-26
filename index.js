@@ -2,7 +2,7 @@
  * dsh-ccusage —— 把 ccusage 的用量报表能力做成 DeepSeek Harness 插件。
  *
  * Host 侧只做三件事：
- *   1. 把插件配置（timezone/sources/costMode/...）规范化；
+ *   1. 把插件配置（timezone/sources/...）规范化；
  *   2. 用 src/report.js 扫描 Claude Code / Codex / OpenCode / Kimi / Grok / pi 的本地日志并聚合；
  *   3. 通过同源 HTTP 路由把报表暴露给面板（client.js）。
  *
@@ -11,7 +11,6 @@
  */
 
 import { runReport, normalizeSources, SOURCE_NAMES } from './src/report.js'
-import { pricingStats } from './src/pricing.js'
 import { normalizeTimeZone, systemTimeZone } from './src/time.js'
 import { clearFileCache, fileCacheStats } from './src/cache.js'
 
@@ -24,7 +23,6 @@ const DEFAULT_CACHE_TTL_MS = 30_000
 const DEFAULTS = {
   timezone: '',
   sources: [...SOURCE_NAMES],
-  costMode: 'auto',
   weekStart: 'monday',
   sessionHours: 5,
   cacheTtlMs: DEFAULT_CACHE_TTL_MS,
@@ -35,7 +33,6 @@ const DEFAULTS = {
   grokDirs: [],
   piDirs: [],
   dshDirs: [],
-  pricing: {},
 }
 
 function asArray(value) {
@@ -60,7 +57,6 @@ export function normalizeConfig(rawConfig) {
   return {
     timezone,
     sources: sources.length > 0 ? sources : [...DEFAULTS.sources],
-    costMode: ['auto', 'calculate', 'display'].includes(input.costMode) ? input.costMode : DEFAULTS.costMode,
     weekStart: input.weekStart === 'sunday' ? 'sunday' : 'monday',
     sessionHours: asNumber(input.sessionHours, DEFAULTS.sessionHours) || DEFAULTS.sessionHours,
     cacheTtlMs: asNumber(input.cacheTtlMs, DEFAULTS.cacheTtlMs),
@@ -71,7 +67,6 @@ export function normalizeConfig(rawConfig) {
     grokDirs: asArray(input.grokDirs),
     piDirs: asArray(input.piDirs),
     dshDirs: asArray(input.dshDirs),
-    pricing: input.pricing !== null && typeof input.pricing === 'object' ? input.pricing : {},
   }
 }
 
@@ -130,8 +125,6 @@ function resolveOptions(config, query) {
   const options = { ...config }
   const timezone = first(query, 'timezone', 'tz')
   if (timezone !== undefined) options.timezone = normalizeTimeZone(timezone)
-  const costMode = first(query, 'costMode', 'mode')
-  if (costMode !== undefined && ['auto', 'calculate', 'display'].includes(costMode)) options.costMode = costMode
   const sources = first(query, 'sources', 'source')
   // 这类查询参数来自 URL：'all'、空串、拼错的来源名都按“未指定”处理，
   // 否则 asArray('all') 会得到 ['all'] 并让所有 source 静默失效。
@@ -161,7 +154,6 @@ function cacheKey(options) {
   return JSON.stringify({
     timezone: options.timezone,
     sources: options.sources,
-    costMode: options.costMode,
     weekStart: options.weekStart,
     sessionHours: options.sessionHours,
     last: options.last ?? null,
@@ -221,7 +213,6 @@ export function apply(ctx, rawConfig) {
       ...body.metadata,
       durationMs: Date.now() - started,
       cache: fileCacheStats(),
-      pricing: pricingStats(),
     }
     sendJson(res, 200, body)
   }
@@ -233,12 +224,10 @@ export function apply(ctx, rawConfig) {
       timezone: config.timezone,
       weekStart: config.weekStart,
       sessionHours: config.sessionHours,
-      costMode: config.costMode,
       sources: config.sources,
       availableSources: SOURCE_NAMES,
       cacheTtlMs: config.cacheTtlMs,
       cache: fileCacheStats(),
-      pricing: pricingStats(),
     })
   }
 

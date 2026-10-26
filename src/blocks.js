@@ -28,7 +28,6 @@ function createBlock(start, entries, now, duration) {
     cacheCreationInputTokens: 0,
     cacheReadInputTokens: 0,
   }
-  let cost = 0
   const models = []
   const seen = new Set()
   for (const entry of entries) {
@@ -36,7 +35,6 @@ function createBlock(start, entries, now, duration) {
     tokenCounts.outputTokens += entry.usage.outputTokens
     tokenCounts.cacheCreationInputTokens += entry.usage.cacheCreationTokens
     tokenCounts.cacheReadInputTokens += entry.usage.cacheReadTokens
-    cost += entry.cost
     const model = entry.model ?? 'unknown'
     if (!seen.has(model)) {
       seen.add(model)
@@ -52,7 +50,6 @@ function createBlock(start, entries, now, duration) {
     isGap: false,
     entries,
     tokenCounts,
-    cost,
     models,
   }
 }
@@ -68,7 +65,6 @@ function createGapBlock(last, next, duration) {
     isGap: true,
     entries: [],
     tokenCounts: { inputTokens: 0, outputTokens: 0, cacheCreationInputTokens: 0, cacheReadInputTokens: 0 },
-    cost: 0,
     models: [],
   }
 }
@@ -114,7 +110,6 @@ export function calculateBurnRate(block) {
   return {
     tokensPerMinute: total / minutes,
     tokensPerMinuteForIndicator: nonCache / minutes,
-    costPerHour: (block.cost / minutes) * 60,
   }
 }
 
@@ -129,10 +124,8 @@ export function projectBlockUsage(block, now = Date.now()) {
   if (burn === null) return null
   const remainingMinutes = Math.round((block.endTime - now) / 60000)
   const tokens = totalTokens(block) + burn.tokensPerMinute * remainingMinutes
-  const cost = block.cost + (burn.costPerHour / 60) * remainingMinutes
   return {
     totalTokens: Math.round(tokens),
-    totalCost: Math.round(cost * 100) / 100,
     remainingMinutes: Math.max(0, remainingMinutes),
   }
 }
@@ -150,7 +143,6 @@ function blockJson(block, now) {
     entries: block.entries.length,
     tokenCounts: { ...block.tokenCounts },
     totalTokens: totalTokens(block),
-    costUSD: block.cost,
     models: block.models,
     burnRate,
     projection,

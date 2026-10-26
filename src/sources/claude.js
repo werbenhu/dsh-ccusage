@@ -176,7 +176,6 @@ function buildEntry(data, file, root) {
     version: typeof data.version === 'string' ? data.version : undefined,
     isSidechain: data.isSidechain === true,
     speed: message.usage.speed === 'fast' ? 'fast' : undefined,
-    storedCost: typeof data.costUSD === 'number' && Number.isFinite(data.costUSD) && data.costUSD >= 0 ? data.costUSD : undefined,
     usage,
     filePath: relative(root, file),
   }
@@ -197,7 +196,6 @@ function advisorEntries(data, base) {
       model: iteration.model,
       rawModel: iteration.model,
       messageId: base.messageId === undefined ? undefined : `${base.messageId}:advisor:${index}`,
-      storedCost: undefined,
       usage,
     })
   })
@@ -321,7 +319,7 @@ function dedupe(entries) {
  * 扫描所有 Claude 会话文件。
  * @returns {Promise<{entries:object[], files:number}>}
  */
-export async function scanClaude({ roots, costMode, pricing }) {
+export async function scanClaude({ roots }) {
   const files = []
   for (const root of roots) files.push(...(await collectJsonl(join(root, 'projects'))))
   files.sort()
@@ -336,7 +334,7 @@ export async function scanClaude({ roots, costMode, pricing }) {
   })
   const entries = dedupe(loaded.flat())
   for (const entry of entries) {
-    finalizeEntry(entry, costMode, pricing)
+    finalizeEntry(entry)
   }
   return { entries, files: files.length }
 }
