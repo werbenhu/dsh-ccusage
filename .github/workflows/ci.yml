@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   test:
-    name: Test (Node ${{ matrix.node }})
+    name: Test (Node ${{ matrix.node }} on ${{ matrix.os }})
     # macOS/Windows 上跑一遍：路径分隔符、大小写、CRLF 等平台差异
     # 最容易在 Linux-only 的 CI 里漏测（0.1.0 首跑就因此挂过一次）。
     strategy:

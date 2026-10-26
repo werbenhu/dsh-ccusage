@@ -17,7 +17,7 @@ import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
 import { cachedByFile } from '../cache.js'
-import { emptyUsage, finalizeEntry, saturatingSub } from './common.js'
+import { emptyUsage, finalizeEntry, lastPathSegment, saturatingSub } from './common.js'
 
 function expandHome(value) {
   if (typeof value !== 'string') return value
@@ -148,7 +148,7 @@ function entryFromTurn(record, file, summary, model, usageRaw) {
     agent: 'grok',
     timestamp,
     sessionId,
-    project: basename(cwd) || 'grok',
+    project: lastPathSegment(cwd) || 'grok',
     projectPath: cwd,
     model: displayModel,
     pricingModel: displayModel.replace(/-build(-fast)?$/, '') || displayModel,

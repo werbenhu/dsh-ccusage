@@ -13,7 +13,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, dirname, join, resolve } from 'node:path'
 
-import { emptyUsage, finalizeEntry } from './common.js'
+import { emptyUsage, finalizeEntry, lastPathSegment } from './common.js'
 import { readOpenCodeDatabase } from './opencode-db.js'
 
 function expandHome(value) {
@@ -106,8 +106,8 @@ function timestampOf(value) {
 function projectOf(value) {
   const cwd = value?.path?.cwd ?? value?.path?.root
   if (typeof cwd === 'string' && cwd !== '') {
-    const name = basename(cwd)
-    return name === '' ? 'opencode' : name
+    const name = lastPathSegment(cwd)
+    return name === undefined ? 'opencode' : name
   }
   return 'opencode'
 }

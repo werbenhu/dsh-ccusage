@@ -25,7 +25,7 @@ import { basename, dirname, join, resolve } from 'node:path'
 
 import { decompress } from '../../vendor/fzstd.mjs'
 import { cachedByFile } from '../cache.js'
-import { emptyUsage, finalizeEntry } from './common.js'
+import { emptyUsage, finalizeEntry, lastPathSegment } from './common.js'
 
 function expandHome(value) {
   if (typeof value !== 'string') return value
@@ -107,7 +107,7 @@ function timestampMs(value) {
 
 function projectFromCwd(cwd) {
   if (typeof cwd !== 'string' || cwd === '') return undefined
-  return basename(cwd) || cwd
+  return lastPathSegment(cwd) || cwd
 }
 
 /** 去掉 DSH 的 Ollama 云后缀，让价格表能命中 deepseek-v4.1-flash。 */

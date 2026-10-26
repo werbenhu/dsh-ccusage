@@ -14,7 +14,7 @@ import { readdir, readFile, stat } from 'node:fs/promises'
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
 
-import { emptyUsage, finalizeEntry, saturatingSub } from './common.js'
+import { emptyUsage, finalizeEntry, lastPathSegment, saturatingSub } from './common.js'
 import { cachedByFile } from '../cache.js'
 import { decompress as zstdDecompress } from '../../vendor/fzstd.mjs'
 
@@ -265,7 +265,7 @@ export async function scanCodex({ roots, costMode, pricing }) {
         timestamp: event.timestamp,
         sessionId: fallbackSession,
         projectPath,
-        project: projectPath === 'Codex' ? 'codex' : basename(projectPath) || 'codex',
+        project: projectPath === 'Codex' ? 'codex' : lastPathSegment(projectPath) || 'codex',
         model: codexModelName(event.model),
         messageId: event.responseId,
         requestId: event.responseId,

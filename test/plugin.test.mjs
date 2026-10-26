@@ -10,7 +10,7 @@ import { loadPricing } from '../src/pricing.js'
 import { buildBlocks, DEFAULT_SESSION_HOURS } from '../src/blocks.js'
 import { calculateCost, findRate } from '../src/pricing.js'
 import { dateKey, resolveRange, systemTimeZone, weekStartDay } from '../src/time.js'
-import { finalizeEntry } from '../src/sources/common.js'
+import { finalizeEntry, lastPathSegment } from '../src/sources/common.js'
 
 /**
  * 取 RUNTIME 侧的绝对路径。源码里用 join() 拼路径，join 按运行平台选分隔符，
@@ -310,4 +310,16 @@ test('dsh source 解析会话事件并去重', async () => {
   assert.equal(second.pricingModel, 'deepseek-v4.1-flash')
   assert.equal(second.usage.cacheCreationTokens, 50)
   assert.equal(second.totalTokens, 200)
+})
+
+test('项目名兼容另一平台的路径分隔符', () => {
+  // 会话里记录的 cwd 可能来自另一平台的机器，展示用的项目名不能只认本机分隔符。
+  assert.equal(lastPathSegment('E:\\repo\\ccusage'), 'ccusage')
+  assert.equal(lastPathSegment('E:\\repo\\ccusage\\'), 'ccusage')
+  assert.equal(lastPathSegment('/home/me/ccusage'), 'ccusage')
+  assert.equal(lastPathSegment('/home/me/ccusage/'), 'ccusage')
+  assert.equal(lastPathSegment('ccusage'), 'ccusage')
+  assert.equal(lastPathSegment(''), undefined)
+  assert.equal(lastPathSegment('/'), undefined)
+  assert.equal(lastPathSegment(undefined), undefined)
 })

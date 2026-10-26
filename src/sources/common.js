@@ -117,3 +117,18 @@ export function addUsage(target, usage) {
 export function sortByTimestamp(entries) {
   return entries.slice().sort((a, b) => a.timestamp - b.timestamp)
 }
+
+/**
+ * 取路径的最后一段，同时兼容 `/` 与 `\` 两种分隔符。
+ *
+ * 会话里记录的 cwd 来自产生它的那台机器，可能是另一平台的写法
+ * （例如在 POSIX 上读取 Windows 记录的 `E:\repo\ccusage`）。此时
+ * `node:path` 的 `basename` 只认当前平台的分隔符，会返回整串路径；
+ * 展示用的项目名因此需要自己切分。
+ */
+export function lastPathSegment(path) {
+  if (typeof path !== 'string') return undefined
+  const segments = path.split(/[\\/]+/).filter((segment) => segment !== '')
+  if (segments.length === 0) return undefined
+  return segments[segments.length - 1]
+}
