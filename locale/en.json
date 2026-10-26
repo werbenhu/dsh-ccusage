@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "CCUsage",
+    "description": "ccusage-style local usage and cost reports for Claude Code / Codex / OpenCode, with daily, weekly, monthly, session and 5-hour block views plus per-model cost breakdowns."
+  }
+}

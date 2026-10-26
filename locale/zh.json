@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "CCUsage 用量",
+    "description": "ccusage 风格的本地用量与成本报表：Claude Code / Codex / OpenCode，支持按天、周、月、会话和 5 小时块查看，并按模型拆分费用。"
+  }
+}
