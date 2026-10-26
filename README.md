@@ -71,7 +71,7 @@ pnpm add https://github.com/werbenhu/dsh-ccusage/releases/download/v0.1.0/dsh-cc
 | pi | `~/.pi/agent/sessions/**/*.jsonl` |
 | DSH | `~/.dsh/sessions/**/session*.jsonl.zstd` |
 
-DSH 这一行算的是 API 等价价，订阅额度不按它扣费。不想看就在来源里关掉。
+DSH 的费用是 API 等价价，订阅额度不按它扣费。不想看就在来源里关掉。
 
 ## JSON 接口
 
