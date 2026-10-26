@@ -10,7 +10,7 @@
  * 因此面板刷新通常只需要几十毫秒。
  */
 
-import { runReport, SOURCE_NAMES } from './src/report.js'
+import { runReport, normalizeSources, SOURCE_NAMES } from './src/report.js'
 import { pricingStats } from './src/pricing.js'
 import { normalizeTimeZone, systemTimeZone } from './src/time.js'
 import { clearFileCache, fileCacheStats } from './src/cache.js'
@@ -133,11 +133,17 @@ function resolveOptions(config, query) {
   const costMode = first(query, 'costMode', 'mode')
   if (costMode !== undefined && ['auto', 'calculate', 'display'].includes(costMode)) options.costMode = costMode
   const sources = first(query, 'sources', 'source')
-  if (sources !== undefined) options.sources = asArray(sources)
+  // 这类查询参数来自 URL：'all'、空串、拼错的来源名都按“未指定”处理，
+  // 否则 asArray('all') 会得到 ['all'] 并让所有 source 静默失效。
+  if (sources !== undefined) options.sources = normalizeSources(sources)
   const weekStart = first(query, 'weekStart')
   if (weekStart === 'sunday' || weekStart === 'monday') options.weekStart = weekStart
   const sessionHours = first(query, 'sessionHours')
-  if (sessionHours !== undefined) options.sessionHours = asNumber(sessionHours, config.sessionHours)
+  if (sessionHours !== undefined) {
+    options.sessionHours = Number.isFinite(Number(sessionHours)) && Number(sessionHours) > 0
+      ? Number(sessionHours)
+      : config.sessionHours
+  }
   const last = first(query, 'last')
   if (last !== undefined) options.last = last
   const since = first(query, 'since')

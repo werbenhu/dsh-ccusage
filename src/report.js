@@ -12,7 +12,7 @@ import { resolvePiRoots, scanPi } from './sources/pi.js'
 import { resolveDshRoots, scanDsh } from './sources/dsh.js'
 import { summarize, summarizeSessions, totalize } from './aggregate.js'
 import { buildBlocks, filterBlocksByDate, DEFAULT_SESSION_HOURS } from './blocks.js'
-import { dateKey, normalizeTimeZone, resolveRange, weekStartDay } from './time.js'
+import { dateKey, normalizeTimeZone, resolveRange, systemTimeZone, weekStartDay } from './time.js'
 
 export const SOURCE_NAMES = ['claude', 'codex', 'opencode', 'kimi', 'grok', 'pi', 'dsh']
 
@@ -84,8 +84,10 @@ export function filterEntries(entries, { since, until, project, agent, timeZone 
   return entries.filter((entry) => {
     if (since !== undefined || until !== undefined) {
       // 显式时区必须优先于其他调用者留下的 date；未指定时区时保留原有快速路径。
+      // dateKey 必须带上时区：系统时区未必等于报表时区（远程面板/CI/服务器），
+      // 早先的 dateKey(entry.timestamp) 会让按日期过滤落到系统时区上。
       const day = timeZone === undefined
-        ? (entry.date ?? dateKey(entry.timestamp))
+        ? (entry.date ?? dateKey(entry.timestamp, systemTimeZone()))
         : dateKey(entry.timestamp, timeZone)
       if (since !== undefined && day < since) return false
       if (until !== undefined && day > until) return false

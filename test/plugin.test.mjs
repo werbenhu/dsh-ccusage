@@ -4,12 +4,12 @@ import { sep } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { apply, isTrustedRequest, normalizeConfig, name, version } from '../index.js'
-import { buildReport, normalizeSources, summarizeSessions } from '../src/report.js'
+import { buildReport, filterEntries, normalizeSources, summarizeSessions } from '../src/report.js'
 import { resolveDshRoots, scanDsh } from '../src/sources/dsh.js'
 import { loadPricing } from '../src/pricing.js'
 import { buildBlocks, DEFAULT_SESSION_HOURS } from '../src/blocks.js'
 import { calculateCost, findRate } from '../src/pricing.js'
-import { dateKey, resolveRange, weekStartDay } from '../src/time.js'
+import { dateKey, resolveRange, systemTimeZone, weekStartDay } from '../src/time.js'
 import { finalizeEntry } from '../src/sources/common.js'
 
 /**
@@ -55,6 +55,43 @@ async function request(route, url, { method = 'GET', origin } = {}) {
   await route.handler(req, res)
   return res
 }
+
+test('filterEntries 未给时区时按系统时区取日期', () => {
+  // 只有 01-05T00:30Z 这种“跨日”时刻才能区分时区：UTC 归 01-05，America/Los_Angeles 归 01-04。
+  const timestamp = Date.parse('2026-01-05T00:30:00Z')
+  const date = dateKey(timestamp, systemTimeZone())
+  const entries = [{ agent: 'claude', timestamp }]
+  assert.equal(filterEntries(entries, { since: date, until: date }).length, 1)
+  const other = date === '2026-01-05' ? '2026-01-04' : '2026-01-05'
+  assert.equal(filterEntries(entries, { since: other, until: other }).length, 0)
+})
+
+test('inject 不能被重复注册', () => {
+  let injected = 0
+  const ctx = {
+    logger: { info() {}, warn() {} },
+    inject(_names, callback) {
+      injected += 1
+      callback({ webServer: { register() { return () => {} } }, effect(fn) { return fn() } })
+    },
+  }
+  apply(ctx, { sources: ['claude'], cacheTtlMs: 0 })
+  assert.equal(injected, 1)
+})
+
+test('HTTP：sources=all 与非法 sessionHours 都按未指定处理', async () => {
+  // sources=all 会扫真实家目录（耗时且依赖本机数据），这里只验证参数归一化：
+  // 非法 sessionHours 回退成配置值，sources 走 normalizeSources 而不是字面量 ['all']。
+  assert.deepEqual(normalizeSources('all'), ['claude', 'codex', 'opencode', 'kimi', 'grok', 'pi', 'dsh'])
+  const route = mount({ sources: ['claude'], claudeDirs: [FIXTURE_CLAUDE], cacheTtlMs: 0, timezone: 'UTC' })
+  const response = await request(route, '/api/dsh-ccusage/report?last=3650&sessionHours=abc')
+  assert.equal(response.statusCode, 200)
+  const payload = response.json
+  assert.equal(payload.metadata.timeZone, 'UTC')
+  assert.ok(Array.isArray(payload.daily))
+  assert.ok(payload.daily.length >= 1)
+  assert.ok(Array.isArray(payload.blocks))
+})
 
 test('package metadata', () => {
   assert.equal(name, 'dsh-ccusage')
