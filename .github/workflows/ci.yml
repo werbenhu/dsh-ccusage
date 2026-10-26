@@ -69,6 +69,25 @@ jobs:
       - name: Run tests
         run: node --test test/*.test.mjs
 
+      # 失败时把 TAP 摘要变成 check annotation：公开仓库的 job 日志要 admin 权限才能取，
+      # 但 check-run annotations 可以匿名读，排障时不用再让贡献者贴本地输出。
+      - name: Test failure digest
+        if: failure()
+        shell: bash
+        run: |
+          set +e
+          node --test --test-reporter=tap test/plugin.test.mjs > tap-plugin.txt 2>&1
+          node --test --test-reporter=tap test/client.test.mjs > tap-client.txt 2>&1
+          for file in tap-plugin.txt tap-client.txt; do
+            echo "::group::$file"
+            grep -n -A25 '^not ok' "$file" | head -n 120 || true
+            echo "::endgroup::"
+            while IFS= read -r line; do
+              [ -n "$line" ] || continue
+              echo "::error title=$file::$(printf '%s' "$line" | tr '\n' ' ' | cut -c1-900)"
+            done < <(grep -A25 '^not ok' "$file" | head -n 40)
+          done
+
       - name: Package dry-run
         if: matrix.node == '22' && matrix.os == 'ubuntu-latest'
         shell: bash
